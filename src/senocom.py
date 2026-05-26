@@ -1,10 +1,10 @@
-import os
-import re
+import os, sys, re
 import pdfplumber
 import unicodedata
-import tkinter as tk
-from tkinter import filedialog, messagebox
 from pypdf import PdfReader, PdfWriter
+from PyQt6.QtWidgets import *
+from PyQt6.QtGui import *
+from PyQt6.QtCore import *
 
 # =========================================================
 # CONFIGURAÇÕES
@@ -382,7 +382,7 @@ def split_pdf(input_pdf, output_folder):
                 # =====================================================
 
                 filename = (
-                    f"[{metadata['id']:02d}] " # RETIRAR DEPOIS - PARA VERSÃO FINAL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    # f"[{metadata['id']:02d}] " # RETIRAR DEPOIS - PARA VERSÃO FINAL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     f"{metadata['date']} "
                     f"{metadata['name']} "
                     f"{metadata['value']}.pdf"
@@ -448,88 +448,375 @@ def process_folder(input_folder, output_folder):
                 pdf_files.append(os.path.join(root, file))
 
     if not pdf_files:
-        messagebox.showwarning('Aviso', 'Nenhum PDF encontrado.')
+        QMessageBox.warning(window, 'Aviso', 'Nenhum PDF encontrado.')
         return
 
     for pdf_file in pdf_files:
         split_pdf(pdf_file, output_folder)
 
 # =========================================================
-# INTERFACE
+# THREAD DE PROCESSAMENTO
 # =========================================================
 
-input_folder = ''
-output_folder = ''
+class Worker(QThread):
 
-def select_input_folder():
-    global input_folder
+    progress = pyqtSignal(int)
+    finished = pyqtSignal()
 
-    folder = filedialog.askdirectory(title='Selecione a pasta de entrada')
+    def __init__(self, input_folder, output_folder):
+        super().__init__()
 
-    if folder:
-        input_folder = folder
-        input_label.config(text=folder)
+        self.input_folder = input_folder
+        self.output_folder = output_folder
 
-def start_process():
+    def run(self):
 
-    if not input_folder:
-        messagebox.showerror('Erro', 'Selecione a pasta de entrada.')
-        return
+        pdf_files = []
 
-    output_folder = filedialog.askdirectory(
-        title='Selecione a pasta de destino final'
+        for root, dirs, files in os.walk(self.input_folder):
+
+            for file in files:
+
+                if file.lower().endswith('.pdf'):
+                    pdf_files.append(os.path.join(root, file))
+
+        total = len(pdf_files)
+
+        if total == 0:
+            self.finished.emit()
+            return
+
+        for index, pdf_file in enumerate(pdf_files):
+
+            try:
+                split_pdf(pdf_file, self.output_folder)
+            except:
+                return
+
+            percent = int(((index + 1) / total) * 100)
+            self.progress.emit(percent)
+
+        self.finished.emit()
+
+# =========================================================
+# WINDOW
+# =========================================================
+
+app = QApplication(sys.argv)
+
+window = QWidget()
+window.setWindowTitle("SeNoCom")
+window.resize(700, 400)
+
+# opcional 
+# window.setWindowIcon(QIcon("icon.ico"))
+
+# =========================================================
+# BACKGROUND
+# =========================================================
+
+window.setStyleSheet("""
+QWidget {
+    background-color: #1e1e1e;
+}
+""")
+
+# =========================================================
+# BACKGROUND IMAGE
+# =========================================================
+
+bg_label = QLabel(window)
+bg_pixmap = QPixmap("bg_hbr.png")
+bg_label.setPixmap(bg_pixmap)
+bg_label.setScaledContents(True)
+
+# =========================================================
+# CARD
+# =========================================================
+
+card = QFrame()
+card.setObjectName("card")
+
+card.setStyleSheet("""
+#card {
+    background-color: rgba(30,30,30,220);
+    border-radius: 16px;
+}
+""")
+
+# =========================================================
+# TITLE
+# =========================================================
+
+titulo = QLabel("SeNoCom")
+
+titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+titulo.setStyleSheet("""
+font-family: "Bahnschrift Condensed";
+font-size: 38px;
+font-weight: bold;
+color: white;
+padding-bottom: 10px;
+""")
+
+# =========================================================
+# INPUTS
+# =========================================================
+
+input_style = """
+QLineEdit {
+    background-color: #2b2b2b;
+    color: white;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 14px;
+}
+"""
+
+entry_input = QLineEdit()
+entry_input.setPlaceholderText("Selecione a pasta contendo os PDFs...")
+entry_input.setStyleSheet(input_style)
+
+# =========================================================
+# BUTTON STYLE
+# =========================================================
+
+button_style = """
+QPushButton {
+    background-color: #f9b02e;
+    color: black;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+QPushButton:hover {
+    background-color: #ffd166;
+}
+
+QPushButton:pressed {
+    background-color: #e69500;
+}
+
+QPushButton:disabled {
+    background-color: #666666;
+    color: #aaaaaa;
+}
+"""
+
+# =========================================================
+# FILE DIALOGS
+# =========================================================
+
+def selecionar_entrada():
+
+    folder = QFileDialog.getExistingDirectory(
+        window,
+        "Selecione a pasta de entrada"
     )
 
-    if not output_folder:
-        messagebox.showwarning(
+    if folder:
+        entry_input.setText(folder)
+
+# =========================================================
+# BUTTONS
+# =========================================================
+
+btn_input = QPushButton("Selecionar Entrada")
+btn_input.setStyleSheet(button_style)
+btn_input.clicked.connect(selecionar_entrada)
+
+btn_start = QPushButton("Executar Processamento")
+btn_start.setStyleSheet(button_style)
+
+# =========================================================
+# PROGRESS BAR
+# =========================================================
+
+progress = QProgressBar()
+
+progress.setStyleSheet("""
+QProgressBar {
+    background-color: #2b2b2b;
+    border-radius: 6px;
+    text-align: center;
+    color: white;
+    height: 18px;
+}
+
+QProgressBar::chunk {
+    background-color: #f9b02e;
+    border-radius: 6px;
+}
+""")
+
+# =========================================================
+# STATUS
+# =========================================================
+
+label_status = QLabel("")
+
+label_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+label_status.setStyleSheet("""
+color: #cccccc;
+font-size: 12px;
+padding-top: 5px;
+""")
+
+# =========================================================
+# EXECUÇÃO
+# =========================================================
+
+worker = None
+
+def iniciar_processamento():
+
+    global worker
+
+    input_folder = entry_input.text().strip()
+
+    if not input_folder:
+        QMessageBox.warning(
+            window,
             'Aviso',
-            'Nenhuma pasta de saída selecionada.'
+            'Selecione a pasta de entrada.'
         )
         return
 
-    try:
-        process_folder(input_folder, output_folder)
-    except Exception as e:
-        messagebox.showerror('Erro', f'{e}')
+    # ============================================
+    # ESCOLHE SAÍDA SOMENTE AO FINAL
+    # ============================================
+
+    output_folder = QFileDialog.getExistingDirectory(
+        window,
+        "Selecione a pasta de destino"
+    )
+
+    if not output_folder:
         return
-    
-    messagebox.showinfo(
+
+    progress.setValue(0)
+
+    btn_start.setEnabled(False)
+
+    label_status.setText('Processando arquivos...')
+
+    worker = Worker(input_folder, output_folder)
+
+    worker.progress.connect(progress.setValue)
+
+    worker.finished.connect(processamento_finalizado)
+
+    worker.start()
+
+def processamento_finalizado():
+
+    btn_start.setEnabled(True)
+
+    label_status.setText('Processamento concluído.')
+
+    QMessageBox.information(
+        window,
         'Concluído',
         'Arquivos processados com sucesso.'
     )
 
-# =========================================================
-# GUI
-# =========================================================
+btn_start.clicked.connect(iniciar_processamento)
 
-root = tk.Tk()
-root.title('Separador de Comprovantes PDF')
-root.geometry('400x240')
+# ==============================
+# FOOTER / ASSINATURA
+# ==============================
 
-frame = tk.Frame(root, padx=20, pady=20)
-frame.pack(fill='both', expand=True)
+github_label = QLabel()
+github_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-btn_input = tk.Button(
-    frame,
-    text='Selecionar Pasta de Entrada',
-    command=select_input_folder,
-    width=30,
-    height=2
+github_label.setText(
+    '<a href="https://github.com/imbaTIMvel/senocom">'
+    'SeNoCom v0.1.0 - GitHub'
+    '</a>'
 )
-btn_input.pack(pady=10)
 
-input_label = tk.Label(frame, text='Nenhuma pasta selecionada', wraplength=650)
-input_label.pack()
+github_label.setOpenExternalLinks(True)
 
-btn_start = tk.Button(
-    frame,
-    text='Executar Processamento',
-    command=start_process,
-    width=30,
-    height=2,
-    bg='green',
-    fg='white'
+github_label.setStyleSheet("""
+QLabel {
+    background-color: transparent;
+    color: rgba(255,255,255,120);
+    font-size: 11px;
+}
+
+QLabel:hover {
+    color: #f9b02e;
+}
+""")
+
+footer = QLabel(
+    "Desenvolvido por: Diretoria Administrativa Financeira - DAF"
 )
-btn_start.pack(pady=30)
 
-root.mainloop()
+footer.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+footer.setStyleSheet("""
+QLabel {
+    background-color: transparent;
+    color: rgba(255,255,255,120);
+    font-size: 10px;
+    padding-bottom: 4px;
+}
+""")
+
+# =========================================================
+# LAYOUTS
+# =========================================================
+
+layout_input = QHBoxLayout()
+layout_input.addWidget(entry_input)
+layout_input.addWidget(btn_input)
+
+card_layout = QVBoxLayout(card)
+
+card_layout.addWidget(titulo)
+card_layout.addLayout(layout_input)
+card_layout.addWidget(btn_start)
+card_layout.addWidget(progress)
+card_layout.addWidget(label_status)
+
+card_layout.setSpacing(15)
+card_layout.setContentsMargins(25, 25, 25, 25)
+card.setMaximumWidth(650)
+
+main_layout = QVBoxLayout(window)
+
+main_layout.addStretch()
+main_layout.addWidget(card, alignment=Qt.AlignmentFlag.AlignCenter
+)
+main_layout.addStretch()
+main_layout.addWidget(github_label, alignment=Qt.AlignmentFlag.AlignBottom)
+main_layout.addWidget(footer, alignment=Qt.AlignmentFlag.AlignBottom)
+
+main_layout.setContentsMargins(40, 40, 40, 40)
+
+window.setLayout(main_layout)
+
+# =========================================================
+# RESPONSIVE BACKGROUND
+# =========================================================
+
+def resize_event(event):
+
+    bg_label.resize(window.size())
+
+window.resizeEvent = resize_event
+
+# =========================================================
+# SHOW
+# =========================================================
+
+window.show()
+
+sys.exit(app.exec())
