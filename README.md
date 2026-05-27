@@ -9,13 +9,11 @@ Repositório oficial do programa SeNoCom (*Se*para e *No*meia *Com*provantes), p
 Para uso adequado do programa, o usuário deve possuir:
 - **Sistema Operacional:** Windows 10 ou 11
 
-Para uso da funcionalidade de conversão `DOC/DOCX`→`PDF`, o usuário deve ter o *Microsoft Word* instalado na versão mais recente.
-
 ## 2. Guia de Uso
 
 ### 2.1 Baixando e Instalando o Programa
 
-Para usar o `JuntaPDF`, primeiro, você deve baixar o arquivo `.exe` disponível [aqui](https://github.com/imbaTIMvel/juntapdf/releases). Procure pela versão mais recente (*Latest*) e clique no arquivo `.exe` para fazer o download.
+Para usar o `SeNoCom`, primeiro, você deve baixar o arquivo `.exe` disponível [aqui](https://github.com/imbaTIMvel/senocom/releases). Procure pela versão mais recente (*Latest*) e clique no arquivo `.exe` para fazer o download.
 
 > [!Warning]
 > Caso você ainda tenha o executável de uma versão antiga do programa, recomenda-se excluí-lo.
@@ -35,103 +33,94 @@ Feito isso, clique no arquivo `.exe` para abrir o programa.
 
 ![Executar assim mesmo](assets/tutorial/windows_defender_02.png)
 
-Antes de iniciar uma operação, junte os arquivos que você deseja emendar em uma pasta. O programa utiliza uma convenção de nomenclatura de arquivos para saber quais arquivos emendar e em que ordem fazê-lo.
+Antes de iniciar uma operação, junte os compilados de comprovantes em uma única pasta.
 
-### 2.3 Organizando os Arquivos de Entrada
+### 2.3 Interface do Programa
 
-Todos os arquivos colocados na pasta devem ser nomeados como:
+![Interface do programa](assets/tutorial/ui.png)
 
-`nome_numero.pdf`
+#### 2.3.1 Pasta de Entrada
 
-Sendo que:
-- `nome` pode ser qualquer texto (incluindo letras maiúsculas, minúsculas, acentos, sinais e números)
-- `_` entre `nome` e `numero` é **INDISPENSÁVEL**
-- `numero` deve ser expresso em números inteiros, na ordem desejada para emenda dos arquivos do conjunto `nome`
-- O conjunto de arquivos de entrada com o mesmo elemento `nome` será mesclado em um único arquivo `nome.pdf`, seguindo a ordem dos índices `numero`
+O programa possui um único campo para a seleção da pasta com os compilados de comprovantes (que se quer separar). Para selecionar a pasta de entrada, deve-se clicar no botão `Selecionar Entrada`. Feito isso, o programa abre um diálogo do *Explorador de Arquivos*, permitindo que o usuário encontre e selecione a pasta desejada.
 
-Para que o programa seja capaz de processá-los e emendá-los adequadamente.
+![Seleção de pasta](assets/tutorial/folder_select_01.png)
 
-Observe o exemplo:
+![Diálogo de seleção de pasta](assets/tutorial/folder_select_02.png)
 
-![Pasta "test_0"](assets/tutorial/test_files.png)
+Após selecionar a pasta, o campo de seleção é atualizado.
 
-Aqui, tenho 5 diferentes grupos de arquivos (disponíveis na pasta [test/test_0](test/test_0)):
-- Grupo "batch": `batch_1.pdf`, `batch_2.pdf`
-- Grupo "copy_test": `copy_test_1.pdf`, `copy_test_2.pdf`, `copy_test_3.doc`, `copy_test_4.pdf`, `copy_test_5.pdf`
-- Grupo "exodia": `exodia_0.pdf`, `exodia_1.pdf`, `exodia_2.pdf`, `exodia_3.pdf`, `exodia_4.pdf`
-- Grupo "lorem ipsum": `lorem ipsum_1.pdf`, `lorem ipsum_2.pdf`, `lorem ipsum_3.pdf`, `lorem ipsum_4.pdf`, `lorem ipsum_5.pdf`, `lorem ipsum_6.pdf`, `lorem ipsum_7.pdf`, `lorem ipsum_8.pdf`, `lorem ipsum_9.pdf`, `lorem ipsum_10.pdf`, `lorem ipsum_11.docx`
-- Grupo "something 04-05-26": `something 04-05-26_1.pdf`, `something 04-05-26_2.pdf`, `something 04-05-26_3.pdf`, `something 04-05-26_4.pdf`, `something 04-05-26_5.pdf`, `something 04-05-26_6.pdf`
+![Interface com a pasta selecionada](assets/tutorial/folder_select_03.png)
 
-O programa reconhece o grupo do arquivo e a ordem em que ele deve ser emendado ao arquivo de saída através da nomenclatura do documento. Tomemos o arquivo `lorem ipsum_5.pdf`, por exemplo:
-- Nome do arquivo (sem a extensão): `lorem ipsum_5`
-- Texto **antes** do underscore ("_"): `lorem ipsum`
-- Texto **depois** do underscore ("_"): `5`
-Logo, este arquivo pertence ao grupo "lorem ipsum", e é o arquivo de índice 5.
+#### 2.3.2 Botão de Execução
 
-Para o conjunto de arquivos apresentados acima, o programa processará os seguintes arquivos de saída:
-- `batch.pdf`
-- `copy_test.pdf`
-- `exodia.pdf`
-- `lorem ipsum.pdf`
-- `something 04-05-26.pdf`
+Selecionada a pasta, ao clicar no botão `Executar Processamento`, o programa permite que o usuário selecione uma pasta de saída dentro de sua máquina - que é o local onde os comprovantes individuais serão armazenados, ao final da operação. Feito isso, o programa processa os arquivos compilados e os separa, nomeando cada comprovante identificado com as informações apropriadas.
 
-Em suma:
+![Clicando no botão](assets/tutorial/start_op_01.png)
 
-| Arquivos de entrada | Operação | Arquivo(s) de saída | Nota |
-| ------------------- | -------- | ------------------- | ---- |
-| `batch_1.pdf`, `batch_2.pdf` | Emendar na ordem: batch_1 + batch_2 | `batch.pdf` | Arquivos de entrada disponíveis em [test_batch](test/test_batch) |
-| `copy_test_1.pdf`, `copy_test_2.pdf`, `copy_test_3.doc`, `copy_test_4.pdf`, `copy_test_5.pdf` | Converter `copy_test_3.doc` em `copy_test_3.pdf`. Emendar na ordem: copy_test_1 + copy_test_2 + copy_test_3 + copy_test_4 + copy_test_5 | `copy_test.pdf` | Arquivos de entrada disponíveis em [test_copy_test](test/test_copy_test) |
-| `exodia_0.pdf`, `exodia_1.pdf`, `exodia_2.pdf`, `exodia_3.pdf`, `exodia_4.pdf` | Emendar na ordem: exodia_0 + exodia_1 + exodia_2 + exodia_3 + exodia_4 | `exodia.pdf` | Arquivos de entrada disponíveis em [test_exodia](test/test_exodia) |
-| `lorem ipsum_1.pdf`, `lorem ipsum_2.pdf`, `lorem ipsum_3.pdf`, `lorem ipsum_4.pdf`, `lorem ipsum_5.pdf`, `lorem ipsum_6.pdf`, `lorem ipsum_7.pdf`, `lorem ipsum_8.pdf`, `lorem ipsum_9.pdf`, `lorem ipsum_10.pdf`, `lorem ipsum_11.docx` | Converter `lorem ipsum_11.docx` em `lorem ipsum_11.pdf`. Emendar na ordem: lorem_ipsum_1 + lorem_ipsum_2 + lorem_ipsum_3 + lorem_ipsum_4 + lorem_ipsum_5 + lorem_ipsum_6 + lorem_ipsum_7 + lorem_ipsum_8 + lorem_ipsum_9 + lorem_ipsum_10 + lorem_ipsum_11 | `lorem_ipsum.pdf` | Arquivos de entrada disponíveis em [test_lorem_ipsum](test/test_lorem_ipsum) |
-| `something 04-05-26_1.pdf`, `something 04-05-26_2.pdf`, `something 04-05-26_3.pdf`, `something 04-05-26_4.pdf`, `something 04-05-26_5.pdf`, `something 04-05-26_6.pdf` | Emendar na ordem: something 04-05-26_1 + something 04-05-26_2 + something 04-05-26_3 + something 04-05-26_4 + something 04-05-26_5 + something 04-05-26_6 | `something 04-05-26.pdf` | Arquivos de entrada disponíveis em [test_something](test/test_something) |
+![Selecionando pasta de saída](assets/tutorial/start_op_02.png)
 
-### 2.4 Selecionando a Pasta
+![Processamento concluído](assets/tutorial/start_op_03.png)
 
-Na janela do programa, clique no botão `Selecionar Pasta` para escolher a pasta onde seus arquivos de entrada estão salvos.
+### 2.4 Modos de Operação
 
-![Clicando no botão](assets/tutorial/input_folder_01.png)
+Por conveniência, o programa possui 2 modos de operação diferentes, que funcionam a depender dos arquivos presentes na pasta de entrada.
 
-![Escolhendo pasta de entrada](assets/tutorial/input_folder_02.png)
+#### 2.4.1 Sem Correspondência
 
-### 2.5 Emendando os Arquivos
+| Arquivos na pasta de entrada       | Padronização | Extensão do arquivo |
+| ---------------------------------- | ------------ | ------------------- |
+| Documentos com vários comprovantes | Itaú e BRB   | `.pdf`              |
 
-Para emendar os PDFs, clique no botão `Juntar PDFs`.
+Neste modo, o programa apenas identifica a quantidade de comprovantes dentro dos PDFs inseridos na pasta de entrada, separando-os individualmente e os renomeando a partir das informações extraídas de cada documento (data da transação, nome do beneficiário e valor), seguindo a padronização:
 
-![Clicando no botão](assets/tutorial/link_pdfs_01.png)
+`DD-MM Nome R$ Valor.pdf`
 
-![Emendando PDFs](assets/tutorial/link_pdfs_02.png)
+Sendo:
+- `DD-MM`: O dia e mês da transação, em formato numérico. Em caso de não identificação do dado, constará como "SEM-DATA";
+- `Nome`: O nome do beneficiário. Em caso de não identificação do dado, constará como "SEM-NOME";
+- `Valor`: O valor da transação, em R$. Em caso de não identificação do dado, constará como "SEM-VALOR".
 
-Após o processamento dos arquivos, o programa abrirá uma janela para que você escolha a pasta onde os arquivos de saída serão salvos.
+#### 2.4.2 Correspondência Ativa
 
-![Escolhendo pasta de saída](assets/tutorial/end_of_operation_01.png)
+| Arquivos na pasta de entrada              | Padronização | Extensão do arquivo      |
+| ----------------------------------------- | ------------ | ------------------------ |
+| Documentos com vários comprovantes        | Itaú e BRB   | `.pdf`                   |
+| Relatório (de Pagamentos ou Recebimentos) | Octalink     | `.xlsx` (planilha Excel) |
 
-![Mensagem de sucesso](assets/tutorial/end_of_operation_02.png)
+Neste modo, o programa separa os comprovantes na pasta de entrada da mesma forma que no modo "Sem Correspondência". Mas, caso haja um Relatório do Octalink (`.xlsx`) na pasta de entrada, o programa deve extrair os dados do relatório, associando o identificador da operação (coluna "ID" do relatório) a cada comprovante - de acordo com a data e o valor da transação. Para isso, ele faz a correspondência da data (`DD-MM`) com a coluna "Vencimento/Mov." do Relatório, e do valor (`Valor`) com a coluna "Valor Total" do Relatório. Assim, ele nomeia os comprovantes seguindo a padronização:
 
-![PDFs emendados](assets/tutorial/end_of_operation_03.png)
+`SIDxxxxxxx DD-MM Nome R$ Valor.pdf`
+
+Sendo:
+- `xxxxxxx`: O ID da transação, com 7 dígitos. Em caso de erro na correspondência, constará como "[ERRO]" (no lugar de `SIDxxxxxxx`);
+- `DD-MM`: O dia e mês da transação, em formato numérico. Em caso de não identificação do dado, constará como "SEM-DATA";
+- `Nome`: O nome do beneficiário. Em caso de não identificação do dado, constará como "SEM-NOME";
+- `Valor`: O valor da transação, em R$. Em caso de não identificação do dado, constará como "SEM-VALOR".
+
+Em caso de o algoritmo não achar correspondência de data e valor, ou achar correspondências múltiplas, o programa deve reportar os erros do algoritmo em um arquivo `.txt` à parte (salvo na pasta de saída selecionada pelo usuário), de nome `erros_do_algoritmo.txt`.
 
 ## 3. Releases
 
-### `v0.1.0` JuntaPDF (*beta release*)
+### `v0.1.0` SeNoCom (*beta release*)
 
 > [!Warning]
 > O lançamento beta (*beta release*) foi desenvolvido para **testes internos**, visando identificar e corrigir bugs antes do lançamento de uma versão estável.
 
-Data de lançamento: `13/05/2026`
+Data de lançamento: `28/05/2026`
 
-Para fazer o download desta versão, clique [aqui](https://github.com/imbaTIMvel/juntapdf/releases/download/v0.1.0/JuntaPDF.exe).
+Para fazer o download desta versão, clique [aqui](https://github.com/imbaTIMvel/juntapdf/releases/download/v0.1.0/SeNoCom.exe).
 
-*Release* inicial do programa de emenda local de arquivos PDF e documentos Word (.doc e .docx) em lote.
+*Release* inicial do programa de separação e nominação automática de comprovantes.
 
 **Features:**
 
-- Recebe arquivos .pdf, juntando-os em PDFs "costurados" de acordo com a nomenclatura e numeração dos arquivos. Por exemplo:
-  - Arquivos de entrada: `string1_1.pdf`, `string1_2.pdf`, `...`, `string1_10.pdf`, `string2_1.pdf`, `string2_2.pdf`, `...`, `string2_10.pdf`, `string3_1.pdf`, `string3_2.pdf`, `...`, `string3_10.pdf`;
-  - Arquivos de saída: `string1.pdf`, `string2.pdf`, `string3.pdf`
-  - Onde "string1", "string2" e "string3" podem ser quaisquer strings de texto (incluindo letras maiúsculas, minúsculas, acentos, sinais e números).
-- Compatível com arquivos .doc e .docx, convertendo-os em .pdf antes da mescla.
-- Permite que o usuário escolha o diretório de salvamento para o(s) arquivo(s) de saída.
+- Recebe uma pasta de entrada, onde identifica:
+  - Documentos PDF com múltiplos comprovantes;
+  - (Opcional) Relatório de Pagamentos ou Recebimentos, conforme exportado pelo Octalink, no formato `.xlsx`;
+- Extrai os dados dos PDFs, separando-os em comprovantes individuais, e os nomeando com as informações de data, nome do beneficiário e valor da transação;
+- Em caso de haver um Relatório na pasta de entrada, o programa faz a associação de data e valor da operação às informações do Relatório, para identificar o ID de cada comprovante.
 
-Clique [aqui](https://github.com/imbaTIMvel/juntapdf/releases) para acessar o **changelog completo**.
+Clique [aqui](https://github.com/imbaTIMvel/senocom/releases) para acessar o **changelog completo**.
 
 ## 4. Desenvolvimento
 
