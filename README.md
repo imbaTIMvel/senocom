@@ -59,7 +59,7 @@ Selecionada a pasta, ao clicar no botão `Executar Processamento`, o programa pe
 
 ![Selecionando pasta de saída](assets/tutorial/op_02.png)
 
-![Processando](assets/tutorial/op_3.png)
+![Processando](assets/tutorial/op_03.png)
 
 ![Processamento concluído](assets/tutorial/op_04.png)
 
