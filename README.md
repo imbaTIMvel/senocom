@@ -108,7 +108,7 @@ Em caso de o algoritmo não achar correspondência de data e valor, ou achar cor
 
 Data de lançamento: `28/05/2026`
 
-Para fazer o download desta versão, clique [aqui](https://github.com/imbaTIMvel/juntapdf/releases/download/v0.1.0/SeNoCom.exe).
+Para fazer o download desta versão, clique [aqui](https://github.com/imbaTIMvel/senocom/releases/download/v0.1.0/SeNoCom.exe).
 
 *Release* inicial do programa de separação e nominação automática de comprovantes.
 
