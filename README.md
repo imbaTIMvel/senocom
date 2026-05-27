@@ -37,7 +37,7 @@ Antes de iniciar uma operação, junte os compilados de comprovantes em uma úni
 
 ### 2.3 Interface do Programa
 
-![Interface do programa](assets/tutorial/ui.png)
+![Interface do programa](assets/tutorial/ui_01.png)
 
 #### 2.3.1 Pasta de Entrada
 
@@ -49,17 +49,19 @@ O programa possui um único campo para a seleção da pasta com os compilados de
 
 Após selecionar a pasta, o campo de seleção é atualizado.
 
-![Interface com a pasta selecionada](assets/tutorial/folder_select_03.png)
+![Interface com a pasta selecionada](assets/tutorial/ui_02.png)
 
 #### 2.3.2 Botão de Execução
 
 Selecionada a pasta, ao clicar no botão `Executar Processamento`, o programa permite que o usuário selecione uma pasta de saída dentro de sua máquina - que é o local onde os comprovantes individuais serão armazenados, ao final da operação. Feito isso, o programa processa os arquivos compilados e os separa, nomeando cada comprovante identificado com as informações apropriadas.
 
-![Clicando no botão](assets/tutorial/start_op_01.png)
+![Clicando no botão](assets/tutorial/op_01.png)
 
-![Selecionando pasta de saída](assets/tutorial/start_op_02.png)
+![Selecionando pasta de saída](assets/tutorial/op_02.png)
 
-![Processamento concluído](assets/tutorial/start_op_03.png)
+![Processando](assets/tutorial/op_3.png)
+
+![Processamento concluído](assets/tutorial/op_04.png)
 
 ### 2.4 Modos de Operação
 
