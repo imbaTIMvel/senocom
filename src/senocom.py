@@ -5,6 +5,8 @@ from pypdf import PdfReader, PdfWriter
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
+from openpyxl import load_workbook
+from datetime import datetime
 
 # =========================================================
 # CONFIGURAÇÕES
@@ -143,6 +145,102 @@ def extract_date(text):
         return f'{parts[0]}-{parts[1]}'
 
     return 'SEM-DATA'
+
+def normalize_currency(value):
+
+    if value is None:
+        return None
+
+    # ==========================================
+    # JÁ É NÚMERO (Excel pode devolver float)
+    # ==========================================
+
+    if isinstance(value, (int, float)):
+        return abs(round(float(value), 2))
+
+    value = str(value).strip()
+
+    # remove R$
+    value = value.replace('R$', '').strip()
+
+    # ==========================================
+    # FORMATO BRASILEIRO
+    # Ex: 22.000,00
+    # ==========================================
+
+    if re.fullmatch(r'-?\d{1,3}(?:\.\d{3})*,\d{2}', value):
+
+        value = value.replace('.', '')
+        value = value.replace(',', '.')
+
+        try:
+            return abs(round(float(value), 2))
+        except:
+            return None
+
+    # ==========================================
+    # FORMATO AMERICANO
+    # Ex: 22,000.00
+    # ==========================================
+
+    if re.fullmatch(r'-?\d{1,3}(?:,\d{3})*\.\d{2}', value):
+
+        value = value.replace(',', '')
+
+        try:
+            return abs(round(float(value), 2))
+        except:
+            return None
+
+    # ==========================================
+    # fallback genérico
+    # ==========================================
+
+    try:
+
+        value = value.replace(',', '')
+
+        return abs(round(float(value), 2))
+
+    except:
+        return None
+
+def extract_day_month(value):
+
+    # ==========================================
+    # DATETIME DO EXCEL
+    # ==========================================
+
+    if isinstance(value, datetime):
+        return value.strftime('%d-%m')
+
+    text = str(value).strip()
+
+    # ==========================================
+    # FORMATO DD/MM/YYYY
+    # ==========================================
+
+    match = re.search(
+        r'(\d{2})/(\d{2})/\d{4}',
+        text
+    )
+
+    if match:
+        return f'{match.group(1)}-{match.group(2)}'
+
+    # ==========================================
+    # FORMATO YYYY-MM-DD
+    # ==========================================
+
+    match = re.search(
+        r'\d{4}-(\d{2})-(\d{2})',
+        text
+    )
+
+    if match:
+        return f'{match.group(2)}-{match.group(1)}'
+
+    return None
 
 def find_value_after_keyword(lines, keywords):
     for i, line in enumerate(lines):
@@ -300,6 +398,15 @@ def detect_document_type(text):
 
     return matches[0][1]
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 # =========================================================
 # EXTRAÇÃO PRINCIPAL
 # =========================================================
@@ -346,10 +453,181 @@ def extract_metadata(text):
     }
 
 # =========================================================
+# RELATÓRIO XLSX
+# =========================================================
+
+def load_report_data(input_folder):
+
+    xlsx_files = []
+
+    for file in os.listdir(input_folder):
+
+        if file.lower().endswith('.xlsx'):
+            xlsx_files.append(
+                os.path.join(input_folder, file)
+            )
+
+    # ==========================================
+    # NENHUM XLSX
+    # ==========================================
+
+    if len(xlsx_files) == 0:
+        return None
+
+    # ==========================================
+    # MAIS DE UM XLSX
+    # ==========================================
+
+    if len(xlsx_files) > 1:
+
+        raise Exception(
+            'Há mais de um arquivo XLSX na pasta.'
+        )
+
+    report_path = xlsx_files[0]
+
+    wb = load_workbook(report_path, data_only=True)
+
+    ws = wb.active
+
+    header_row = None
+
+    # ==========================================
+    # PROCURA "Vencimento/Mov."
+    # ==========================================
+
+    for row in range(1, 11):
+
+        for col in range(1, ws.max_column + 1):
+
+            value = ws.cell(row=row, column=col).value
+
+            if value and 'Vencimento/Mov.' in str(value):
+
+                header_row = row
+                break
+
+        if header_row:
+            break
+
+    if not header_row:
+
+        raise Exception(
+            'Cabeçalho não encontrado no XLSX.'
+        )
+
+    # ==========================================
+    # MAPA DE COLUNAS
+    # ==========================================
+
+    columns = {}
+
+    for col in range(1, ws.max_column + 1):
+
+        value = ws.cell(
+            row=header_row,
+            column=col
+        ).value
+
+        if value:
+            columns[str(value).strip()] = col
+
+    if 'ID' not in columns:
+
+        raise Exception(
+            'Coluna "ID" não encontrada.'
+        )
+
+    if 'Valor Total' not in columns:
+
+        raise Exception(
+            'Coluna "Valor Total" não encontrada.'
+        )
+
+    if 'Vencimento/Mov.' not in columns:
+
+        raise Exception(
+            'Coluna "Vencimento/Mov." não encontrada.'
+        )
+
+    # ==========================================
+    # EXTRAÇÃO DAS LINHAS
+    # ==========================================
+
+    operations = []
+
+    for row in range(header_row + 1, ws.max_row + 1):
+
+        operation_id = ws.cell(
+            row=row,
+            column=columns['ID']
+        ).value
+
+        operation_date = ws.cell(
+            row=row,
+            column=columns['Vencimento/Mov.']
+        ).value
+
+        operation_value = ws.cell(
+            row=row,
+            column=columns['Valor Total']
+        ).value
+
+        if not operation_id:
+            continue
+
+        normalized_date = extract_day_month(
+            operation_date
+        )
+
+        normalized_value = normalize_currency(
+            operation_value
+        )
+
+        operations.append({
+            'row': row,
+            'id': str(operation_id),
+            'date': normalized_date,
+            'value': normalized_value
+        })
+
+    return operations
+
+def find_matching_operation(metadata, operations):
+
+    if not operations:
+        return None, []
+
+    pdf_date = metadata['date']
+
+    pdf_value = normalize_currency(
+        metadata['value']
+    )
+
+    matches = []
+
+    for op in operations:
+
+        if (
+            op['date'] == pdf_date
+            and op['value'] == pdf_value
+        ):
+            matches.append(op)
+
+    # ======================================
+    # MATCH ÚNICO
+    # ======================================
+
+    if len(matches) == 1:
+        return matches[0], matches
+
+    return None, matches
+
+# =========================================================
 # PDF
 # =========================================================
 
-def split_pdf(input_pdf, output_folder):
+def split_pdf(input_pdf, output_folder, operations=None, error_log=None):
 
     print(f'Processando: {input_pdf}')
 
@@ -381,8 +659,64 @@ def split_pdf(input_pdf, output_folder):
                 # FINAL DO COMPROVANTE ENCONTRADO
                 # =====================================================
 
+                prefix = ''
+
+                # ======================================
+                # EXISTE XLSX
+                # ======================================
+
+                if operations is not None:
+
+                    matched_operation, matches = find_matching_operation(
+                        metadata,
+                        operations
+                    )
+
+                    # MATCH ÚNICO
+                    if matched_operation:
+
+                        raw_id = re.sub(
+                            r'\D',
+                            '',
+                            matched_operation['id']
+                        )
+
+                        sid = raw_id.zfill(7)[-7:]
+
+                        prefix = f'SID{sid} '
+
+                    # ERRO
+                    else:
+
+                        prefix = '[ERRO] '
+
+                        if error_log is not None:
+
+                            if len(matches) == 0:
+
+                                error_log.append(
+                                    (
+                                        'SEM MATCH',
+                                        metadata,
+                                        []
+                                    )
+                                )
+
+                            else:
+
+                                rows = [m['row'] for m in matches]
+
+                                error_log.append(
+                                    (
+                                        'MÚLTIPLOS MATCHES',
+                                        metadata,
+                                        rows
+                                    )
+                                )
+
                 filename = (
                     # f"[{metadata['id']:02d}] " # RETIRAR DEPOIS - PARA VERSÃO FINAL !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    f"{prefix}"
                     f"{metadata['date']} "
                     f"{metadata['name']} "
                     f"{metadata['value']}.pdf"
@@ -450,9 +784,45 @@ def process_folder(input_folder, output_folder):
     if not pdf_files:
         QMessageBox.warning(window, 'Aviso', 'Nenhum PDF encontrado.')
         return
+    
+    # ==================================================
+    # CARREGA RELATÓRIO
+    # ==================================================
 
+    operations = load_report_data(input_folder)
+    error_log = []
     for pdf_file in pdf_files:
-        split_pdf(pdf_file, output_folder)
+        split_pdf(pdf_file, output_folder, operations, error_log)
+    
+    # ==================================================
+    # GERA TXT DE ERROS
+    # ==================================================
+
+    if error_log:
+        log_path = os.path.join(
+            output_folder,
+            'erros_do_algoritmo.txt'
+        )
+        with open(
+            log_path,
+            'w',
+            encoding='utf-8'
+        ) as f:
+            for error_type, metadata, rows in error_log:
+                f.write(
+                    f'{error_type}\n'
+                )
+                f.write(
+                    f'Arquivo: '
+                    f'{metadata["date"]} '
+                    f'{metadata["name"]} '
+                    f'{metadata["value"]}\n'
+                )
+                if rows:
+                    f.write(
+                        f'Linhas possíveis: {rows}\n'
+                    )
+                f.write('\n')
 
 # =========================================================
 # THREAD DE PROCESSAMENTO
@@ -471,30 +841,22 @@ class Worker(QThread):
 
     def run(self):
 
-        pdf_files = []
+        try:
 
-        for root, dirs, files in os.walk(self.input_folder):
+            process_folder(
+                self.input_folder,
+                self.output_folder
+            )
 
-            for file in files:
+        except Exception as e:
 
-                if file.lower().endswith('.pdf'):
-                    pdf_files.append(os.path.join(root, file))
+            QMessageBox.critical(
+                window,
+                'Erro',
+                str(e)
+            )
 
-        total = len(pdf_files)
-
-        if total == 0:
-            self.finished.emit()
-            return
-
-        for index, pdf_file in enumerate(pdf_files):
-
-            try:
-                split_pdf(pdf_file, self.output_folder)
-            except:
-                return
-
-            percent = int(((index + 1) / total) * 100)
-            self.progress.emit(percent)
+        self.progress.emit(100)
 
         self.finished.emit()
 
@@ -507,9 +869,7 @@ app = QApplication(sys.argv)
 window = QWidget()
 window.setWindowTitle("SeNoCom")
 window.resize(700, 400)
-
-# opcional 
-# window.setWindowIcon(QIcon("icon.ico"))
+window.setWindowIcon(QIcon(resource_path("senocom.ico")))
 
 # =========================================================
 # BACKGROUND
@@ -526,7 +886,7 @@ QWidget {
 # =========================================================
 
 bg_label = QLabel(window)
-bg_pixmap = QPixmap("bg_hbr.png")
+bg_pixmap = QPixmap(resource_path("bg_hbr.png"))
 bg_label.setPixmap(bg_pixmap)
 bg_label.setScaledContents(True)
 
