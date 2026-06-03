@@ -2,9 +2,9 @@ import os, sys, re
 import pdfplumber
 import unicodedata
 from pypdf import PdfReader, PdfWriter
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
 from openpyxl import load_workbook
 from datetime import datetime
 
@@ -830,8 +830,8 @@ def process_folder(input_folder, output_folder):
 
 class Worker(QThread):
 
-    progress = pyqtSignal(int)
-    finished = pyqtSignal()
+    progress = Signal(int)
+    finish_proc = Signal()
 
     def __init__(self, input_folder, output_folder):
         super().__init__()
@@ -858,7 +858,7 @@ class Worker(QThread):
 
         self.progress.emit(100)
 
-        self.finished.emit()
+        self.finish_proc.emit()
 
 # =========================================================
 # WINDOW
@@ -1070,11 +1070,13 @@ def iniciar_processamento():
 
     worker.progress.connect(progress.setValue)
 
-    worker.finished.connect(processamento_finalizado)
+    worker.finish_proc.connect(processamento_finalizado)
 
     worker.start()
 
 def processamento_finalizado():
+
+    print("PROCESSAMENTO FINALIZADO") ##################################################################
 
     btn_start.setEnabled(True)
 
