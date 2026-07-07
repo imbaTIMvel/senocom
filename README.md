@@ -103,6 +103,28 @@ Em caso de o algoritmo não achar correspondência de data e valor, ou achar cor
 
 ## 3. Releases
 
+### `v0.2.0` SeNoCom (*beta release*)
+
+> [!Warning]
+> O lançamento beta (*beta release*) foi desenvolvido para **testes internos**, visando identificar e corrigir bugs antes do lançamento de uma versão estável.
+
+Para fazer o download desta versão, clique [aqui](https://github.com/imbaTIMvel/senocom/releases/download/v0.2.0/SeNoCom.exe).
+
+> [!Warning]
+> O lançamento beta (*beta release*) foi desenvolvido para **testes internos**, visando identificar e corrigir bugs antes do lançamento de uma versão estável.
+
+**Correções:**
+
+- Padrão de separação de comprovantes atualizado para refletir as mudanças na formatação do Itaú.
+
+**Features:**
+
+- Recebe uma pasta de entrada, onde identifica:
+  - Documentos PDF com múltiplos comprovantes;
+  - (Opcional) Relatório de Pagamentos ou Recebimentos, conforme exportado pelo Octalink, no formato `.xlsx`;
+- Extrai os dados dos PDFs, separando-os em comprovantes individuais, e os nomeando com as informações de data, nome do beneficiário e valor da transação;
+- Em caso de haver um Relatório na pasta de entrada, o programa faz a associação de data e valor da operação às informações do Relatório, para identificar o ID de cada comprovante.
+
 ### `v0.1.0` SeNoCom (*beta release*)
 
 > [!Warning]
