@@ -15,15 +15,15 @@ from datetime import datetime
 DOCUMENT_TYPES = {
     "Comprovante de Transferência": { "id": 1,
         "anchor": "Comprovante de Transferência",
-        "date": ["data da transferencia:"],
-        "name": ["nome do recebedor:"],
-        "value": ["valor:"],
+        "date": ["data da transferencia"],
+        "name": ["nome do recebedor"],
+        "value": ["valor"],
     },
     "Comprovante de pagamento de boleto": { "id": 2,
         "anchor": "Comprovante de pagamento de boleto",
-        "date": ["data de pagamento:"],
-        "name": ["razao social:"],
-        "value": ["(=) valor do pagamento (r$):"],
+        "date": ["data do pagamento"],
+        "name": ["nome"],
+        "value": ["valor do pagamento"],
     },
     "Comprovante de Transferência CC": { "id": 3,
         "anchor": "conta corrente para conta corrente", # Comprovante de Transferência de conta corrente para conta corrente
@@ -32,10 +32,29 @@ DOCUMENT_TYPES = {
         "value": ["valor:"],
     },
     "Comprovante TED": { "id": 4,
-        "anchor": "TED solicitada em", # Comprovante de pagamento TED C - outra titularidade
-        "date": ["ted solicitada em"],
-        "name": ["nome do favorecido:"],
-        "value": ["valor da ted:"],
+        # cobre "Comprovante de pagamento TED - outra titularidade" e "... - mesma titularidade"
+        "anchor": "comprovante de pagamento ted",
+        "date": ["data do pagamento"],
+        "name": ["nome"],
+        "value": ["valor do pagamento"],
+    },
+    "Comprovante CDB": { "id": 12, # NOVO (v0.2.0) - Itaú/Comprovante de Resgate Antecipado CDB
+        "anchor": "resgate antecipado cdb",
+        "date": ["data do credito"],
+        "name": ["agencia"], # valor é prefixado com "CDB " (ver extract_metadata)
+        "value": ["valor liquido resgatado"],
+    },
+    "Comprovante Pagamento de Titulos BB": { "id": 13, # NOVO (v0.2.0) - Banco do Brasil
+        "anchor": "comprovante de pagamento de titulos",
+        "date": ["data do pagamento"],
+        "name": ["nome fantasia"],
+        "value": ["valor do documento"],
+    },
+    "Comprovante de Transferência (débito)": { "id": 14, # NOVO (v0.2.0) - assumido a partir da tabela da pág. 6; confirmar banco/âncora
+        "anchor": "COMPROVANTE DE TRANSFERENCIA",
+        "date": ["debito em"],
+        "name": ["favorecido"],
+        "value": ["valor"],
     },
     "Comprovante concessionárias": { "id": 5,
         "anchor": "Comprovante de Pagamento de concessionárias",
@@ -367,6 +386,43 @@ def find_name_after_keyword(lines, keywords, context=None):
 
     return 'SEM-NOME'
 
+def find_raw_value_after_keyword(lines, keywords):
+    """
+    Como find_name_after_keyword, mas sem o filtro is_valid_name.
+    Necessário para campos como 'Agência', que são numéricos e seriam
+    rejeitados pelo filtro de nomes.
+    """
+    for i, line in enumerate(lines):
+
+        line_lower = line.lower()
+
+        for keyword in keywords:
+
+            if keyword.lower() in line_lower:
+
+                candidate = re.sub(
+                    re.escape(keyword),
+                    '',
+                    line,
+                    flags=re.IGNORECASE
+                ).strip()
+
+                candidate = candidate.replace(':', '').strip()
+
+                if candidate:
+                    return sanitize_filename(candidate)
+
+                for j in range(1, 4):
+
+                    if i + j < len(lines):
+
+                        next_line = lines[i + j].strip()
+
+                        if next_line:
+                            return sanitize_filename(next_line)
+
+    return None
+
 def find_line_after_anchor(lines, anchor):
     for i, line in enumerate(lines):
 
@@ -435,8 +491,16 @@ def extract_metadata(text):
         context = 'Dados de destino'
     if doc_type == 'Comprovante de Transferência CC':
         context = 'Dados da conta creditada'
+    if doc_type in ('Comprovante de pagamento de boleto', 'Comprovante TED'):
+        # v0.2.0: "nome" deve ser buscado depois de "dados do beneficiário"
+        context = 'dados do beneficiario'
+
     if doc_type == 'Comprovante concessionárias':
         name = find_line_after_anchor(lines, normalize_text(config['anchor']))
+    elif doc_type == 'Comprovante CDB':
+        # v0.2.0: nome do arquivo = "CDB" + valor do campo "Agência"
+        agencia = find_raw_value_after_keyword(lines, config['name'])
+        name = f'CDB {agencia}' if agencia else 'CDB SEM-NOME'
     else:
         name = find_name_after_keyword(lines, config['name'], context=context)
 
@@ -1099,7 +1163,7 @@ github_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
 github_label.setText(
     '<a href="https://github.com/imbaTIMvel/senocom">'
-    'SeNoCom v0.1.0 - GitHub'
+    'SeNoCom v0.2.0 - GitHub'
     '</a>'
 )
 
