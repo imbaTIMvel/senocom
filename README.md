@@ -110,9 +110,6 @@ Em caso de o algoritmo não achar correspondência de data e valor, ou achar cor
 
 Para fazer o download desta versão, clique [aqui](https://github.com/imbaTIMvel/senocom/releases/download/v0.2.0/SeNoCom.exe).
 
-> [!Warning]
-> O lançamento beta (*beta release*) foi desenvolvido para **testes internos**, visando identificar e corrigir bugs antes do lançamento de uma versão estável.
-
 **Correções:**
 
 - Padrão de separação de comprovantes atualizado para refletir as mudanças na formatação do Itaú.
